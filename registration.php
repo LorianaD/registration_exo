@@ -1,7 +1,11 @@
 <?php
+
+    require_once 'config/database.php';
+
     //condition pour vérifier si on a recu une request en post (formulaire)
 
     $errors = [];
+    $message = "";
 
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -41,8 +45,43 @@
             $errors[] = "mot de passe doivent etre identique"; // alors envoie le msg
         }
 
-        var_dump($errors);
-        
+        if (empty($errors)) {
+
+            // logique de traitement en db
+            $pdo = dbConnexion();
+
+            // verifier si l'adresse email est utilisé ou non
+            $checkEmail = $pdo -> prepare("SELECT email FROM users WHERE email = ? ");
+            
+            // la methode execute de mon objet pdo execute la request préparée
+            $checkEmail -> execute([$email]);
+
+            // une condition pour vérifier si je recupere quelque chose
+            if ($checkEmail -> rowCount() > 0) {
+
+            $errors[] = "email déjà utilisé";
+
+            } else {
+                
+                // dans le cas ou tout va bien ! email pas utilisé
+
+                // hashage du mdb avec la fonction password_hash
+                $hashPassword = password_hash($password, PASSWORD_DEFAULT);
+                
+                // Insertion des données en db
+                // exemple : INSERT INTO users(name, email, password) VALUES ("Julius CARNAROLI", "j.carnaroli@exemple.com", "julius123");
+                $insertUser = $pdo->prepare("
+                INSERT INTO users (name, email, password) 
+                VALUES (?, ?, ?)
+                ");
+
+                $insertUser -> execute([$name, $email, $hashPassword]);
+
+                $message = "Super ! Vous êtes enregistré $name";
+            }
+
+        }
+
     }
 ?>
 
@@ -52,7 +91,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="asset/style/style.css?v=1.0">
 </head>
 <body>
     <header>
@@ -62,6 +101,14 @@
         <section>
         <h2>Formulaire d'enregistrement</h2>
             <form action="" method="POST">
+                <?php
+                    foreach ($errors as $error) {
+                        echo $error;
+                    }
+                    if(!empty($message)) {
+                        echo $message;
+                    }
+                ?>
                 <div>
                     <label for="name">Nom</label>
                     <input type="text" name="name" id="name" placeholder="Veuillez entrer votre nom" required>
