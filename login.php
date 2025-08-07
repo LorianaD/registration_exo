@@ -2,11 +2,10 @@
 
 require_once 'config/database.php';
 
-    //condition pour vérifier si on a recu une request en post (formulaire)
-
     $errors = [];
     $message = "";
 
+    //condition pour vérifier si on a recu une request en post (formulaire)
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         // On verifie qu'il n'y ai pas de code ou d'espace extra dans la saisie
@@ -25,18 +24,17 @@ require_once 'config/database.php';
             // logique de traitement en data base. Connexion à la base de donnée.
             $pdo = dbConnexion();
 
-            // verifier si l'adresse existe
-            $checkEmail = $pdo -> prepare("SELECT email, password FROM users WHERE email = ? ");
+            // verifier si l'adresse existe et on recupére la password
+            $checkEmail = $pdo -> prepare("SELECT * FROM users WHERE email = ? ");
             
             // la methode execute de mon objet pdo execute la request préparée
             $checkEmail -> execute([$email]);
 
-
+            // On récupère la ligne de l'utilisateur
+            $userData = $checkEmail -> fetch();
+            
             // On verifie si l'e-mail existe
-            if ($checkEmail -> rowCount() === 1) {
-
-                // On récupère la ligne de l'utilisateur
-                $userData = $checkEmail -> fetch();
+            if ($userData) {
 
                 // Si l'email est correct
                 // On verifie le mot de passe // WARNING : elle traite uniquement les mot de passe enregistrer avec hashing.
@@ -95,7 +93,7 @@ require_once 'config/database.php';
                     <input type="password" name="password" id="password" placeholder="Veuillez inserer votre mot de passe">
                 </div>
 
-                <input type="submit" value="Envoyer" class="btn">
+                <input type="submit" value="Se connecter" class="btn">
 
                 <?php if (!empty($errors)): ?>
 
@@ -125,7 +123,7 @@ require_once 'config/database.php';
 
     </main>
     <footer>
-        <p>© 2025 - by Loriana DIANO</p>
+        <span>© 2025 - by Loriana DIANO</span>
     </footer>
 </body>
 </html>
